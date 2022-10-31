@@ -1,3 +1,9 @@
+---
+title: Xiangyu Li
+intro: Xiangyu Li
+desc: A researcher and engineer for Graphics, Deep Learning and Vision. Working to bring imagination world to reality.
+---
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -5,13 +11,114 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- fontawesome --><!-- Space Mono and Rubik Fonts -->
+    <script src="https://kit.fontawesome.com/2c5be901e2.js" type="c88a90c95b17574ecbef965b-text/javascript"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600&display=swap" rel="stylesheet">
+
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-
-    <title>Hello, world!</title>
+    
+    <title>{{ page.title }}</title>
   </head>
   <body>
-    <h1>Hello, world!</h1>
+    <div class="jumbotron">
+        <div class="container">
+            <h1><strong>{{ page.intro }}</strong></h1>
+            <div class="mt-2">
+                <ul class="list-inline">
+                    <li class="list-inline-item">
+                        <a href="mailto:xiangyu_li@alumni.brown.edu" style="color:#000;">
+                            <i class="fa fa-fw fa-envelope">
+                            </i>
+                        </a>
+                    </li>
+                    <li class="list-inline-item">
+                        <a href="https://github.com/UUNagato" style="color:#000;">
+                            <i class="fa fa-fw fa-github">
+                            </i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <p>{{ page.desc }}</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="mt-5">
+            <h4 class="text-muted">EXPERIENCE</h4>
+            {% for item in site.data.experiences %}
+            <div class="row mt-4">
+                <div class="col-md-2">
+                    {%if item.thumb != null %}
+                    <img src={{item.thumb}} class="img-rounded embed-responsive embed-responsive-1by1 mt-2" style="object-fit:contain;"/>
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    <h5><strong>{{ item.organization }}<span></span>-{{ item.period }}</strong></h5>
+                    </p>
+                    <h5 style="text-indent:2em"><em>{{ item.title }}</em></h5>
+                    {%if item.description != null %}
+                    <h5 class="text-muted" style="text-indent:2em">{{ item.description }}</h5>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-5">
+            <h4 class="text-muted">PUBLICATIONS</h4>
+            {% for item in site.data.publications %}
+            <div class="row mt-4">
+                <div class="col-md-2 mt-2">
+                    {%if item.thumb != null %}
+                    {%if item.projurl != null %}
+                    <a href={{item.projurl}}>
+                    {% endif %}
+                    <img src={{item.thumb}} class="img-rounded" width="140" height="140" />
+                    {%if item.projurl != null %}
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                <div class="col-md-10">
+                    <h5><strong>{{ item.title }}</strong></h5>
+                    <h5>{{ item.authors }}</h5>
+                    <h5 class="text-muted">{{ item.publicationat }}</h5>
+                    {%if item.projurl != null %}<h5><a href="{{ item.projurl }}">project page</a></h5>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-5">
+            <h4 class="text-muted">PROJECTS</h4>
+            <div class="row mt-4">
+                {% for item in site.data.projects %}
+                <div class="col-lg-4">
+                    <div>
+                        {%if item.video != null %}
+                        <video class="embed-responsive embed-responsive-1by1" src={{item.video}} playsinline autoplay loop muted>
+                            ::before
+                        </video>
+                        {% elsif item.thumb != null %}
+                        <img class="embed-responsive embed-responsive-1by1" src={{item.thumb}} />
+                        {% endif %}
+                    </div>
+                    <div class="mt-2">
+                        <h5 class="rubik">{{ item.title }}</h5>
+                        <h5 class="text-muted rubik">{{ item.description }}</h5>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->

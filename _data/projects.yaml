@@ -1,0 +1,11 @@
+- title: MPM Simulation
+  description: Material Point Method for Simulation
+  video: "assets/videos/mpm_seu.mp4"
+
+- title: Cubify
+  description: Make Models Cube
+  video: "assets/videos/cubi.mp4"
+
+- title: Style Transfer Nerf
+  description: Look things differently
+  video: "assets/videos/styleNERF.mp4"
