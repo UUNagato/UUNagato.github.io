@@ -54,18 +54,26 @@ desc: A researcher and engineer for Graphics, Deep Learning and Vision. Working 
             <h4 class="text-muted">EXPERIENCE</h4>
             {% for item in site.data.experiences %}
             <div class="row mt-4">
-                <div class="col-md-2">
+                <div class="col-md-2 mx-2 mx-md-0">
                     {%if item.thumb != null %}
-                    <img src={{item.thumb}} class="img-rounded embed-responsive embed-responsive-1by1 mt-2" style="object-fit:contain;"/>
+                    <img src={{item.thumb}} class="img-rounded embed-responsive embed-responsive-1by1 mx-sm-4 mx-md-0 mt-2" style="object-fit:contain;"/>
                     {% endif %}
                 </div>
-                <div class="col-md-10">
-                    <h5><strong>{{ item.organization }}<span></span>-{{ item.period }}</strong></h5>
-                    </p>
-                    <h5 style="text-indent:2em"><em>{{ item.title }}</em></h5>
+                <div class="col-md-10 mt-4 mt-md-0">
+                    <div class="row">
+                        <div class="col-xs-12 col-md-9">
+                            <h5><strong>{{ item.organization }}</strong></h5>
+                        </div>
+                        <div class="col-xs-12 col-md-3">
+                            <h5 class="text-md-right"><strong>{{ item.period }}</strong></h5>
+                        </div>
+                    </div>
+                    <div class="pl-md-4">
+                    <h5><em>{{ item.title }}</em></h5>
                     {%if item.description != null %}
-                    <h5 class="text-muted" style="text-indent:2em">{{ item.description }}</h5>
+                    <h5 class="text-muted">{{ item.description }}</h5>
                     {% endif %}
+                    </div>
                 </div>
             </div>
             {% endfor %}
@@ -75,18 +83,18 @@ desc: A researcher and engineer for Graphics, Deep Learning and Vision. Working 
             <h4 class="text-muted">PUBLICATIONS</h4>
             {% for item in site.data.publications %}
             <div class="row mt-4">
-                <div class="col-md-2 mt-2">
+                <div class="col-md-2 mt-2" style="min-height:144px">
                     {%if item.thumb != null %}
                     {%if item.projurl != null %}
                     <a href={{item.projurl}}>
                     {% endif %}
-                    <img src={{item.thumb}} class="img-rounded" width="140" height="140" />
+                    <img src={{item.thumb}} class="rounded img-fluid" />
                     {%if item.projurl != null %}
                     </a>
                     {% endif %}
                     {% endif %}
                 </div>
-                <div class="col-md-10">
+                <div class="col-md-10 mt-3 mt-md-0">
                     <h5><strong>{{ item.title }}</strong></h5>
                     <h5>{{ item.authors }}</h5>
                     <h5 class="text-muted">{{ item.publicationat }}</h5>
@@ -100,16 +108,13 @@ desc: A researcher and engineer for Graphics, Deep Learning and Vision. Working 
             <h4 class="text-muted">PROJECTS</h4>
             <div class="row mt-4">
                 {% for item in site.data.projects %}
-                <div class="col-lg-4">
-                    <div>
-                        {%if item.video != null %}
-                        <video class="embed-responsive embed-responsive-1by1" src={{item.video}} playsinline autoplay loop muted>
-                            ::before
-                        </video>
-                        {% elsif item.thumb != null %}
-                        <img class="embed-responsive embed-responsive-1by1" src={{item.thumb}} />
-                        {% endif %}
-                    </div>
+                <div class="col-lg-4 mb-4 mb-md-2">
+                    {%if item.video != null %}
+                    <video class="embed-responsive embed_responsive-4by3" src={{item.video}} playsinline autoplay loop muted>
+                    </video>
+                    {% elsif item.thumb != null %}
+                    <img class="embed-responsive embed_responsive-4by3" src={{item.thumb}} />
+                    {% endif %}
                     <div class="mt-2">
                         <h5 class="rubik">{{ item.title }}</h5>
                         <h5 class="text-muted rubik">{{ item.description }}</h5>

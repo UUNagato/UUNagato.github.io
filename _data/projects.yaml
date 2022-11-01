@@ -7,5 +7,5 @@
   video: "assets/videos/cubi.mp4"
 
 - title: Style Transfer Nerf
-  description: Look things differently
+  description: Style Transfer Images with NeRF
   video: "assets/videos/styleNERF.mp4"
