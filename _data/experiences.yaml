@@ -1,7 +1,7 @@
 - title: Game Engine Developer
   period: 2021.8 - Now
   organization: miHoYo (Hoyoverse)
-  description: Realtime-Rendering, Character Shading for Genshin Impact
+  description: Realtime Rendering, Shading, Global-Illumination for Genshin Impact.
   thumb: "assets/images/mihoyo-logo.png"
 - title: Master's Degree
   period: 2019.8 - 2021.5
@@ -13,7 +13,7 @@
   organization: Microsoft Research Asia
   description: Research Assistant on DL & Graphics, CV
   thumb: "assets/images/msra.webp"
-- title: Visitor Researcher
+- title: Visiting Research Assistant
   period: 2018.8 - 2018.12
   organization: Brown University
   description: Research Assistant at Brown HCI Lab
