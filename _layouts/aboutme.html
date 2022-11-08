@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {% include dependencies.html %}
+    <title>{{ page.title }}</title>
+  </head>
+  <body>
+    {% include navigation.html %}
+
+    <div class="container">
+        <div class="row jutify-content-around mt-5">
+        <div class="col-xs-12 col-md-3 mt-2 mt-md-5">
+            <div class="mt-5">
+            <h1><strong>{{ page.intro }}</strong></h1>
+            </div>
+            <div class="mt-2">
+                <ul class="list-inline">
+                    <li class="list-inline-item">
+                        <a href="mailto:xiangyu_li@alumni.brown.edu" style="color:#000;">
+                            <i class="fa fa-fw fa-envelope">
+                            </i>
+                        </a>
+                    </li>
+                    <li class="list-inline-item">
+                        <a href="https://github.com/UUNagato" style="color:#000;">
+                            <i class="fa fa-fw fa-github">
+                            </i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-xs-12 col-md-9 mt-2 mt-md-5">'
+            <div style="font-weight: 400; font-family: 'Rubik', sans-serif;">{{ content }}</div>
+        </div>
+        </div>
+    </div>
+
+    {% include dependenciesend.html %}
+  </body>
+</html>

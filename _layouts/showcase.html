@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+  <head>
+    {% include dependencies.html %}
+    <title>{{ page.title }}</title>
+  </head>
+  <body>
+    {% include navigation.html %}
+    <div class="jumbotron">
+        <div class="container">
+        <h1 class="text-center"><strong>{{ page.showcasetitle }}</strong></h1>
+        </div>
+    </div>
+
+    <div class="container">
+    {{ content }}
+    </div>
+
+    {% include dependenciesend.html %}
+  </body>
+</html>

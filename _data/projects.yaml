@@ -1,6 +1,7 @@
 - title: MPM Simulation
   description: Material Point Method for Simulation
   video: "assets/videos/mpm_seu.mp4"
+  link: "showcase/mpm.html"
 
 - title: Cubify
   description: Make Models Cube
@@ -9,3 +10,8 @@
 - title: Style Transfer NeRF
   description: Style Transfer Images with NeRF
   video: "assets/videos/styleNERF.mp4"
+
+- title: Pixel Shader QMC
+  description: Online Example of Halton Sampler QMC with MIS
+  thumb: "assets/images/qmcglsl.jpg"
+  link: "showcase/shadertoy.html"

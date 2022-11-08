@@ -7,25 +7,11 @@ desc: A researcher and engineer for Graphics, Deep Learning and Vision. Working 
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-    <!-- fontawesome --><!-- Space Mono and Rubik Fonts -->
-    <script src="https://kit.fontawesome.com/2c5be901e2.js" type="c88a90c95b17574ecbef965b-text/javascript"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600&display=swap" rel="stylesheet">
-
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    
+    {% include dependencies.html %}
     <title>{{ page.title }}</title>
   </head>
   <body>
+    {% include navigation.html %}
     <div class="jumbotron">
         <div class="container">
             <h1><strong>{{ page.intro }}</strong></h1>
@@ -109,14 +95,26 @@ desc: A researcher and engineer for Graphics, Deep Learning and Vision. Working 
             <div class="row mt-4">
                 {% for item in site.data.projects %}
                 <div class="col-lg-4 mb-4 mb-md-2">
-                    {%if item.video != null %}
-                    <video class="embed-responsive embed_responsive-4by3" src={{item.video}} playsinline autoplay loop muted>
-                    </video>
-                    {% elsif item.thumb != null %}
-                    <img class="embed-responsive embed_responsive-4by3" src={{item.thumb}} />
+                    {%if item.link != null %}
+                        <a href={{item.link}}>
+                    {% endif %}
+                        {%if item.video != null %}
+                        <video class="embed-responsive embed_responsive-4by3" src={{item.video}} playsinline autoplay loop muted>
+                        </video>
+                        {% elsif item.thumb != null %}
+                        <img class="embed-responsive embed_responsive-4by3" src={{item.thumb}} />
+                        {% endif %}
+                    {%if item.link != null %}
+                        </a>
                     {% endif %}
                     <div class="mt-2">
+                        {%if item.link != null %}
+                        <a href="{{item.link}}">
+                        {% endif %}
                         <h5 class="rubik">{{ item.title }}</h5>
+                        {%if item.link != null %}
+                        </a>
+                        {% endif %}
                         <h5 class="text-muted rubik">{{ item.description }}</h5>
                     </div>
                 </div>
@@ -125,10 +123,6 @@ desc: A researcher and engineer for Graphics, Deep Learning and Vision. Working 
         </div>
     </div>
 
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    {% include dependenciesend.html %}
   </body>
 </html>
