@@ -4,12 +4,13 @@
   link: "showcase/mpm.html"
 
 - title: Cubify
-  description: Make Models Cube
+  description: Make Models Cubic
   video: "assets/videos/cubi.mp4"
 
 - title: Style Transfer NeRF
   description: Style Transfer Images with NeRF
   video: "assets/videos/styleNERF.mp4"
+  link: "showcase/styleNeRF.html"
 
 - title: Pixel Shader QMC
   description: Online Example of Halton Sampler QMC with MIS
