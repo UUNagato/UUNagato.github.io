@@ -14,6 +14,6 @@ Neural Radiance Field (NeRF), however, learns a neural radiance field representa
 
 Combining them together gives a view-consistent style transferred result. The disadvantage is that, because the input is not view-consistent, the learned radiance field is just an average of inconsistent parts. And this blurs result.
 
-<center><video src="/assets/videos/styleNERF.mp4" controls></video></center>
+<center><video class="embed-responsive" src="/assets/videos/styleNERF.mp4" controls></video></center>
 
 In this project, an variant of NeRF called Neural Sparse Voxel Fields is used instead of the original NeRF.
