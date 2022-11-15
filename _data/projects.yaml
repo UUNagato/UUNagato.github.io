@@ -7,7 +7,7 @@
   description: Make Models Cubic
   video: "assets/videos/cubi.mp4"
 
-- title: Style Transfer NeRF
+- title: NeRF with Style Transfer CNN
   description: Style Transfer Images with NeRF
   video: "assets/videos/styleNERF.mp4"
   link: "showcase/styleNeRF.html"
