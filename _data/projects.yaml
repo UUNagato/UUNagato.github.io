@@ -16,3 +16,8 @@
   description: Online Example of Halton Sampler QMC with MIS
   thumb: "assets/images/qmcglsl.jpg"
   link: "showcase/shadertoy.html"
+
+- title: 3D position estimation of hands
+  description: An algorithm of 3D position estimation of hands from a single RGB image. Used in VR for hand interaction.
+  thumn: "assets/videos/hand3dpose.mp4"
+  link: "showcase/3dhand.html"
