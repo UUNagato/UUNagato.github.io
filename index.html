@@ -84,7 +84,12 @@ desc: A researcher and engineer for Graphics, Deep Learning and Vision. Working 
                     <h5><strong>{{ item.title }}</strong></h5>
                     <h5>{{ item.authors }}</h5>
                     <h5 class="text-muted">{{ item.publicationat }}</h5>
-                    {%if item.projurl != null %}<h5><a href="{{ item.projurl }}">project page</a></h5>{% endif %}
+                    {%if item.projurl != null or item.pdflink != null %}
+                    <h5>
+                      {%if item.projurl != null %}<a href="{{ item.projurl }}">project page</a>{% endif %}
+                      {%if item.pdflink != null %}<a href="{{ item.pdflink }}">pdf <i class="fa fa-file-pdf-o"></i></a>{% endif %}
+                    </h5>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}

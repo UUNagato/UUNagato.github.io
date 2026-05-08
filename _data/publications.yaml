@@ -1,3 +1,8 @@
+- title: "Gradient-based Approximation of Nonuniform Low-Discrepancy Samples"
+  authors: "Xiangyu Li, Ege Ciklabakkal, Daniel Ritchie, Toshiya Hachisuka."
+  publicationat: "SIGGRAPH 2026 (Conference Track)"
+  thumb: "assets/images/nonuniform_lds.png"
+  pdflink: "assets/pdfs/nonuniform_lds.pdf"
 - title: "DISP6D: Disentangled Implicit Shape and Pose Learning for Scalable 6D Pose Estimation"
   authors: "Yilin Wen, Xiangyu Li, Hao Pan, Lei Yang, Zheng Wang, Taku Komura, Wenping Wang."
   publicationat: "ECCV 2022"
