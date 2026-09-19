@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Explore neural image compression: how two 4-bit feature grids and a small sine network reconstruct a pixel.">
+  <meta name="color-scheme" content="light">
+  <title>An image, inside a network · Img2ShaderToy</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="header">
+  <a class="brand" href="#"><span class="brand-mark" aria-hidden="true">n.</span> Img2ShaderToy <span class="brand-note">/ FIELD GUIDE</span></a>
+  <nav aria-label="Chapters"><a href="#compare">Compare</a><a href="#architecture">Architecture</a><a href="#storage">Storage</a><a href="#optimization">Optimization</a></nav>
+  <div class="header-tools"><span class="edition">FIELD NOTES <span>015—017</span></span><a class="language-switch" href="index-CN.html" lang="zh-CN" hreflang="zh-CN" aria-label="切换到中文">中文 ↗</a></div>
+</header>
+<main id="main">
+<section class="hero shell" id="compare">
+  <div class="hero-copy">
+    <p class="eyebrow"><span class="live-dot"></span> AN INTERACTIVE GUIDE TO NEURAL COMPRESSION</p>
+    <h1>An image,<br>inside a <span class="serif-accent">network.</span></h1>
+    <p class="intro">Two feature grids. One small neural network.<br>Reconstruct every pixel, at roughly the size of BC7.</p>
+    <div class="hero-actions"><a class="button primary" href="#architecture">Follow a pixel <span aria-hidden="true">↗</span></a><a class="text-link" href="#evidence">Explore the evidence ↓</a><a class="text-link" href="https://www.shadertoy.com/view/733GWs" target="_blank" rel="noopener noreferrer">Live ShaderToy demo ↗</a></div>
+    <div class="hero-stats">
+      <div><span class="stat-label">Packed size</span><strong>255.4<span> KiB</span></strong><small>Including descriptor</small></div>
+      <div><span class="stat-label">Reconstruction</span><strong>43.636<span> dB</span></strong><small>Unfiltered · RGB8 PSNR</small></div>
+      <div><span class="stat-label">Compared with BC7</span><strong class="green">+0.732<span> dB</span></strong><small>On this test image</small></div>
+    </div>
+    <p class="scope-note">512 × 512 · Fitted to this image · Matched storage budget</p>
+  </div>
+  <div class="comparison-panel">
+    <div class="panel-top"><span><span class="mini-square"></span> RECONSTRUCTION / 001</span><span>512 × 512</span></div>
+    <div class="compare-stage" id="compare-stage">
+      <img id="compare-right" src="assets/neural.png" alt="Test image reconstructed by the neural model" width="512" height="512" draggable="false">
+      <img class="compare-left" id="compare-left" src="assets/bc7.png" alt="The same test image reconstructed with BC7" width="512" height="512" draggable="false">
+      <span class="image-label left" id="left-label">BC7</span><span class="image-label right">Our model</span>
+      <div class="split-line" id="split-line"><span aria-hidden="true">↔</span></div>
+    </div>
+    <div class="comparison-controls">
+      <label class="range-label" for="split">Drag to compare <output id="split-value">50%</output></label>
+      <input type="range" id="split" min="0" max="100" value="50" aria-label="Image comparison divider">
+      <div class="control-row"><div class="segmented" aria-label="Left comparison image"><button class="active" data-compare="bc7" aria-pressed="true">BC7</button><button data-compare="original" aria-pressed="false">Reference</button></div><span class="small muted">Model reconstruction on the right</span></div>
+    </div>
+  </div>
+</section>
+<div class="chapter-strip"><div class="shell"><span>Learn a compact representation that reconstructs RGB.</span><span class="mono">LOCAL FEATURES → SMALL NETWORK → COLOR</span></div></div>
+
+<section id="architecture" class="section shell">
+  <div class="section-heading"><div><p class="eyebrow">01 / FOLLOW A PIXEL</p><h2>The journey of a <span class="serif-accent">pixel.</span></h2></div><p>Pick a point. Follow the features it reads,<br>through the network, all the way to a color.</p></div>
+  <div id="load-status" class="status" role="status">Loading the local model…</div>
+  <div class="explorer">
+    <aside class="pixel-panel">
+      <div class="panel-top"><span>Choose a pixel</span><span class="mono" id="pixel-coord">(193, 224)</span></div>
+      <div class="pixel-stage" id="pixel-stage"><img src="assets/original.png" width="512" height="512" alt="Click the reference image to select a pixel to trace"><span class="crosshair" id="crosshair" aria-hidden="true"></span></div>
+      <div class="coordinate-controls"><label>X <input type="number" id="pixel-x" min="0" max="511" value="193"></label><label>Y <input type="number" id="pixel-y" min="0" max="511" value="224"></label><button id="trace-button" class="button compact" disabled>Trace →</button></div>
+      <div class="preset-row"><button data-pixel="193,224">Eye</button><button data-pixel="270,278">Cheek</button><button data-pixel="246,91">Hair</button></div>
+      <div class="pixel-result"><div><span class="swatch" id="source-swatch"></span><span>Reference RGB<strong id="source-rgb">—</strong></span></div><div><span class="swatch" id="output-swatch"></span><span>Computed RGB<strong id="output-rgb">—</strong></span></div></div>
+      <p class="small muted">Evaluated at native pixel centers. Detail views follow this selection.</p>
+    </aside>
+    <div class="network-panel">
+      <div class="network-top"><span class="mono">UV <span id="uv-value">—</span></span><span class="tag">Real parameters · Live computation</span></div>
+      <div class="feature-branches">
+        <button class="feature-node selected" data-node="fine" aria-pressed="true"><span class="node-index fine-color">A / FINE GRID</span><strong>Fine grid</strong><span class="node-size">256 × 256 × 6</span><canvas id="fine-mini" width="220" height="64" aria-label="24 features from the four selected fine-grid nodes"></canvas><span class="node-foot">Gather four nodes <b>24 values</b></span></button>
+        <button class="feature-node" data-node="coarse" aria-pressed="false"><span class="node-index coarse-color">B / COARSE GRID</span><strong>Coarse grid</strong><span class="node-size">128 × 128 × 5</span><canvas id="coarse-mini" width="220" height="64" aria-label="Five interpolated coarse-grid features"></canvas><span class="node-foot">Bilinear interpolation <b>5 values</b></span></button>
+        <button class="feature-node" data-node="position" aria-pressed="false"><span class="node-index position-color">C / POSITION</span><strong>Position encoding</strong><span class="node-size">sin / cos · 3 frequencies</span><canvas id="position-mini" width="220" height="64" aria-label="Twelve Fourier position features at this coordinate"></canvas><span class="node-foot">Encode the location <b>12 values</b></span></button>
+      </div>
+      <div class="merge-path" aria-hidden="true"><span></span><span></span><span></span></div>
+      <button class="concat-node" data-node="input" aria-pressed="false"><span>Concatenate</span><strong>24 + 5 + 12 = <em>41</em></strong><span class="mono">INPUT VECTOR</span></button>
+      <div class="flow-arrow" aria-hidden="true">↓</div>
+      <div class="layer-chain">
+        <button class="layer-node" data-node="layer0" aria-pressed="false"><span>Hidden layer 1</span><canvas id="layer0-mini" width="160" height="72" aria-label="80 activations in hidden layer 1"></canvas><strong>80 <small>sin(30x)</small></strong></button><span class="chain-arrow" aria-hidden="true">→</span>
+        <button class="layer-node" data-node="layer1" aria-pressed="false"><span>Hidden layer 2</span><canvas id="layer1-mini" width="160" height="72" aria-label="80 activations in hidden layer 2"></canvas><strong>80 <small>sin(30x)</small></strong></button><span class="chain-arrow" aria-hidden="true">→</span>
+        <button class="layer-node" data-node="layer2" aria-pressed="false"><span>Hidden layer 3</span><canvas id="layer2-mini" width="160" height="72" aria-label="80 activations in hidden layer 3"></canvas><strong>80 <small>sin(30x)</small></strong></button><span class="chain-arrow" aria-hidden="true">→</span>
+        <button class="rgb-node" data-node="output" aria-pressed="false"><span id="network-swatch"></span><strong>RGB</strong><small>Linear → Clamp</small></button>
+      </div>
+      <div class="node-detail" id="node-detail" aria-live="polite"><p>Once loaded, select a node to inspect its values.</p></div>
+      <p class="small muted">Tiles encode numbers, not RGB images. Darker hidden-layer tiles indicate larger absolute activations; hues distinguish positive and negative values.</p>
+    </div>
+  </div>
+  <details class="technical"><summary>Math and decoding details <span>41 → 80 → 80 → 80 → 3</span></summary><div><p>Pixel coordinates use <code>uv = ((x + 0.5) / 512, (y + 0.5) / 512)</code>. At each level, grid coordinates are <code>uv × size − 0.5</code>, with clamped boundaries. Fine-grid features are concatenated in top-left, top-right, bottom-left, bottom-right order; coarse-grid features are interpolated by distance.</p><p>Position frequencies are 64, 128 and 256 cycles, each producing sin(x), sin(y), cos(x) and cos(y). Hidden layers compute <code>h = sin(30 × (Wh + b))</code>; the output layer maps linearly to RGB, then clamps to [0, 1].</p><p>The JavaScript decoder reads the actual model.bin. Floating-point accumulation differs slightly from the GPU; full-image metrics use the verified RGB8 reconstruction. Display resizing reconstructs the trained pixels before image resampling. Continuous reconstruction at arbitrary coordinates is not assumed.</p><p id="self-check">Reference pixels are checked after loading.</p></div></details>
+</section>
+
+<section id="storage" class="storage-section"><div class="shell section">
+  <div class="section-heading"><div><p class="eyebrow">02 / INSIDE THE FILE</p><h2>What fits<br>inside 255 KiB?</h2></div><p>About 91% of the space holds local features.<br>A small network translates them into color.</p></div>
+  <div class="storage-layout"><div>
+    <div class="storage-total"><strong>255.396 <span>KiB</span></strong><span>261,526 bytes<br>Packed data + descriptor</span></div>
+    <div class="storage-bar" aria-label="Packed file size breakdown"><button data-storage="fine" style="flex:196608" aria-label="Fine grid 192 KiB" class="fine-bg active">Fine grid</button><button data-storage="coarse" style="flex:40960" aria-label="Coarse grid 40 KiB" class="coarse-bg">Coarse grid</button><button data-storage="network" style="flex:22344" aria-label="Network 21.820 KiB" class="network-bg"></button><button data-storage="meta" style="flex:1614" aria-label="Descriptor 1.576 KiB" class="meta-bg"></button></div>
+    <div class="storage-legend"><button data-storage="fine" class="active"><i class="fine-bg"></i>Fine grid <b>192 KiB</b></button><button data-storage="coarse"><i class="coarse-bg"></i>Coarse grid <b>40 KiB</b></button><button data-storage="network"><i class="network-bg"></i>Network <b>21.820 KiB</b></button><button data-storage="meta"><i class="meta-bg"></i>Descriptor <b>1.576 KiB</b></button></div>
+    <div class="storage-detail" id="storage-detail" aria-live="polite"></div>
+    <div class="bc7-budget"><span>BC7 block payload</span><strong>256.000 KiB</strong><span class="budget-line"></span></div>
+    <p class="small muted">Both exclude the generic decoder. Packed size, GLSL source size and GPU memory usage are separate measurements.</p>
+  </div><div class="grid-view"><div class="panel-top"><span id="grid-title">Fine grid · Learned features</span><label>Channel <select id="grid-channel" aria-label="Select feature channel"></select></label></div><canvas id="grid-canvas" width="256" height="256" aria-label="Actual grid values of the selected feature channel"></canvas><div class="grid-caption"><span>−7/16</span><span class="color-scale"></span><span>8/16</span></div><p class="small muted">False color shows quantized features, not a downscaled original.</p></div></div>
+</div></section>
+
+<section id="optimization" class="section shell">
+  <div class="section-heading"><div><p class="eyebrow">03 / BETTER CODES, SAME BUDGET</p><h2>Better quality.<br>Not one extra bit.</h2></div><p>Same architecture, bit depths and data size.<br>Optimize the integer codes that go into the file.</p></div>
+  <div class="optimization-layout"><div class="optimization-story"><ol class="training-steps"><li><span>01</span><div><strong>Fit the source image</strong><p>Learn local features and the decoder together. Each target image has its own parameters.</p></div></li><li><span>02</span><div><strong>Quantize and fine-tune</strong><p>Store grids at 4 bits and weights at 10 bits, then adapt to the actual storage precision.</p></div></li><li class="highlight-step"><span>03</span><div><strong>Choose better integer codes</strong><p>Try −1, unchanged and +1 for each grid code. Compare errors in affected pixels and accept only improvements.</p><div class="code-choices"><span>q − 1</span><span>q</span><span>q + 1</span></div><small>Candidate set illustration · The best choice depends on measured error</small></div></li></ol><p class="small muted">These are 12 measured discrete-search passes after joint fine-tuning. Search minimizes floating-point MSE; the chart shows RGB8 PSNR.</p></div>
+  <div class="history-panel"><div class="panel-top"><span>DISCRETE SEARCH / MEASURED</span><span>Same 255.396 KiB</span></div><div class="history-metric"><strong id="history-score">42.648<span> dB</span></strong><span>Pass <b id="history-pass">0</b> / 12<br><span id="history-changes">Starting point</span></span></div><svg id="history-chart" viewBox="0 0 560 245" role="img" aria-label="RGB8 PSNR over discrete-search passes"></svg><label class="range-label" for="history-slider">Explore search progress <span>Each point is a measurement</span></label><input type="range" id="history-slider" min="0" max="12" value="0"><div class="history-endpoints"><span>After fine-tuning: 42.648 dB</span><span>Final: 43.636 dB</span></div><div class="search-crops"><figure><canvas id="search-before" width="256" height="256" aria-label="Selected crop before discrete search"></canvas><figcaption>Before · Pass 0</figcaption></figure><figure><canvas id="search-after" width="256" height="256" aria-label="The same crop after twelve search passes"></canvas><figcaption>After · Pass 12</figcaption></figure></div><p class="small muted">These fixed before/after views follow the selected pixel. The slider changes the chart, not the crop images; intermediate-pass images are not shown.</p></div></div>
+</section>
+
+<section id="evidence" class="evidence-section"><div class="shell section">
+  <div class="section-heading"><div><p class="eyebrow">04 / LOOK CLOSER</p><h2>Let the details speak.</h2></div><p>Three images. The same crop and magnification.<br>A better overall score does not mean every region is better.</p></div>
+  <div class="detail-toolbar"><div class="segmented" aria-label="Comparison mode"><button data-detail="color" class="active" aria-pressed="true">Pixel detail</button><button data-detail="error" aria-pressed="false">Absolute error × 8</button></div><label>Zoom <select id="zoom"><option value="64">4×</option><option value="32" selected>8×</option><option value="16">16×</option></select></label><span class="mono" id="crop-coord">Centered on (193, 224)</span><a href="#architecture" class="text-link">Pick another pixel ↑</a></div>
+  <div class="crop-grid"><figure><canvas id="crop-original" width="256" height="256" aria-label="Magnified reference crop"></canvas><figcaption><strong>Reference</strong><span>REFERENCE</span></figcaption></figure><figure><canvas id="crop-bc7" width="256" height="256" aria-label="Magnified BC7 crop at the same location"></canvas><figcaption><strong>BC7</strong><span>42.904 dB · 256 KiB</span></figcaption></figure><figure><canvas id="crop-neural" width="256" height="256" aria-label="Magnified neural crop at the same location"></canvas><figcaption><strong>Our model</strong><span>43.636 dB · 255.396 KiB</span></figcaption></figure></div>
+  <p class="small muted" id="error-note">Nearest-neighbor magnification preserves individual pixels. PSNR labels describe the full image.</p>
+  <div class="evidence-bottom"><div><h3>Most gains come from edges.</h3><p>On this image, the model has lower error at strong edges. Flat and remaining regions still trail BC7. This is one measured example, not a claim across all images.</p><div class="table-scroll"><table><thead><tr><th>Region</th><th>BC7 RMSE</th><th>Model RMSE</th></tr></thead><tbody><tr><td>Edges · 20.84%</td><td>3.429</td><td class="green">2.657</td></tr><tr><td>Flat · 11.95%</td><td>0.304</td><td>0.393</td></tr><tr><td>Other · 67.21%</td><td>1.137</td><td>1.404</td></tr></tbody></table></div><p class="small muted">RMSE uses RGB values from 0 to 255. Lower is better.</p></div><div class="repro-panel"><p class="eyebrow">OPEN THE EXPERIMENT</p><h3>Every number has a source.</h3><p>Same 512² RGB image, no filtering, consistent RGB8 output. BC7 uses the existing DirectXTex CPU maximum baseline.</p><div class="resource-links"><a href="assets/experiment-report.md" target="_blank" rel="noopener">Equal-rate experiment report (Chinese) <span>↗</span></a><a href="assets/deployment-report.md" target="_blank" rel="noopener">WebGL validation report (Chinese) <span>↗</span></a><a href="assets/model.bin" download>Download packed model <span>253.820 KiB ↓</span></a><a href="assets/model.json" download>Download decoder descriptor <span>1.576 KiB ↓</span></a></div><details><summary>Deployment size and speed</summary><p>Round 17 GLSL source is 924,067 bytes, separate from the 261,526-byte packed codec. At native 512², subsequent frames had a median GPU time of about 22.5 ms on the tested machine. First-observed compilation took 3.155 seconds without clearing driver caches. These are device-specific records, not a live benchmark of this page.</p></details></div></div>
+</div></section>
+</main>
+<footer class="shell footer"><a class="brand" href="#"><span class="brand-mark">n.</span> Img2ShaderToy</a><span>A single-image compression study · Round 15 / 17</span><a class="text-link" href="../../#projects">← All projects</a><a href="#">Back to top ↑</a></footer>
+<noscript><p class="no-script">Images and explanations work without JavaScript. Enable it for pixel tracing and interactive comparisons.</p></noscript>
+</body></html>
