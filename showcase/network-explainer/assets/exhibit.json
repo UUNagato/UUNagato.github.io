@@ -260,16 +260,6 @@
       "source": "experiments/20260918_round15_equalrate/discrete_after_joint/model.json",
       "bytes": 1614,
       "sha256": "c1a474a8e3e53221544ae30b5ef29e42d1bf87aaab3498162e861df526b3b5d6"
-    },
-    "experiment-report.md": {
-      "source": "experiments/20260918_round15_equalrate/REPORT.md",
-      "bytes": 6676,
-      "sha256": "3d9cac99e0c1fa500dd1ca26134c71904ca5acfd47f33248066e40b022f8ca9b"
-    },
-    "deployment-report.md": {
-      "source": "experiments/20260919_round17_compile/REPORT.md",
-      "bytes": 2190,
-      "sha256": "026d5b8b4321bbe777d6f191e6e0c2bd65bf6722bfb06213d99d48dc096e9d8f"
     }
   },
   "width": 512,
