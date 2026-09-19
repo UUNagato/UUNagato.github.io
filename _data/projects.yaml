@@ -8,10 +8,10 @@
   thumb: "assets/images/genshinimpact.jfif"
   link: "https://genshin.hoyoverse.com"
 
-- title: MPM Simulation
-  description: Material Point Method for Simulation
+- title: Material Point Method
+  description: Interactive 3D snow simulation with MLS-MPM and APIC.
   video: "assets/videos/mpm_seu.mp4"
-  link: "showcase/mpm.html"
+  link: "showcase/mpm/"
 
 - title: Cubify
   description: Make Models Cubic

@@ -1,0 +1,4 @@
+let api=null;
+async function load(){const response=await fetch('mpm.wasm');if(!response.ok)throw Error('找不到模拟模块，请先构建 WebAssembly。');const result=await WebAssembly.instantiate(await response.arrayBuffer(),{env:{exp:Math.exp}});api=result.instance.exports;api.__wasm_call_ctors?.();}
+function snapshot(extra={}){const ptr=api.get_display(),count=api.get_count();const data=new Float32Array(api.memory.buffer,ptr,count*5).slice();postMessage({data,count,time:api.get_time(),error:api.get_error(),...extra},[data.buffer]);}
+self.onmessage=async({data})=>{try{if(!api)await load();if(data.type==='reset'){api.initialize(data.scene,data.side);api.set_material(data.young);snapshot({reset:true,id:data.id});}else if(data.type==='step'){api.set_material(data.young);const start=performance.now();api.advance(data.steps);snapshot({ms:performance.now()-start,id:data.id});}}catch(error){postMessage({fatal:error.message});}};
