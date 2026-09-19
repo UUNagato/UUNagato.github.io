@@ -107,7 +107,7 @@ desc: A researcher and engineer for Graphics, Deep Learning and Vision. Working 
                         <video class="embed-responsive embed_responsive-4by3" src={{item.video}} playsinline autoplay loop muted>
                         </video>
                         {% elsif item.thumb != null %}
-                        <img class="embed-responsive embed_responsive-4by3" src={{item.thumb}} />
+                        <img class="embed-responsive" style="aspect-ratio:16/9;object-fit:cover;" src={{item.thumb}} />
                         {% endif %}
                     {%if item.link != null %}
                         </a>
