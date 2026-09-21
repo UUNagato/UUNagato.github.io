@@ -44,7 +44,7 @@ function updatePixel(x,y){
   const source=pixelAt('original',state.x,state.y),output=t.rgb.map(v=>Math.round(v*255));
   $('source-swatch').style.background=rgbString(source);$('source-rgb').textContent=source.join(' · ');
   $('output-swatch').style.background=rgbString(output);$('network-swatch').style.background=rgbString(output);$('output-rgb').textContent=output.join(' · ');
-  drawCells('fine-mini',t.fineValues,6,.5);drawCells('coarse-mini',t.coarseValues,5,.5);drawCells('position-mini',t.position,6);
+  drawCells('fine-mini',t.fineValues,6,.5);drawCells('coarse-mini',t.coarseValues,2,.5);drawCells('local-mini',t.localValues,3,.5);drawCells('position-mini',t.position,6);
   for(let i=0;i<3;i++)drawCells(`layer${i}-mini`,t.activations[i],10);
   renderNode();renderCrops();
 }
@@ -62,13 +62,16 @@ function renderNode(){
   let title='',size='',body='';
   if(state.node==='fine'||state.node==='coarse'){
     const fine=state.node==='fine',sample=fine?t.fine:t.coarse;
-    title=fine?'A / 四个节点，保留全部特征':'B / 按距离混合四个节点';size=fine?'4 × 6 = 24':'4 × 5 → 5';
-    body=`<p>${fine?'每个节点存 6 个 4-bit 特征，按左上、右上、左下、右下顺序直接拼接，不做插值。':'每个节点存 5 个 4-bit 特征，用双线性权重混合为 5 个输入。权重之和为 1。'}</p><div class="table-scroll"><table class="node-table"><thead><tr><th>节点 (x, y)</th>${fine?'':'<th>插值权重</th>'}<th>解码特征值</th></tr></thead><tbody>${sample.nodes.map((n,i)=>`<tr><td>(${n.x}, ${n.y})</td>${fine?'':`<td>${fmt(sample.weights[i])}</td>`}<td>${n.values.map(v=>fmt(v,3)).join(' / ')}</td></tr>`).join('')}</tbody></table></div>`;
+    title=fine?'A / 四个节点，保留全部特征':'B / 按距离混合四个节点';size=fine?'4 × 6 = 24':'4 × 2 → 2';
+    body=`<p>${fine?'每个节点存 6 个 4-bit 特征，按左上、右上、左下、右下顺序直接拼接，不做插值。':'每个节点存 2 个 4-bit 特征，用双线性权重混合为 2 个输入。权重之和为 1。'}</p><div class="table-scroll"><table class="node-table"><thead><tr><th>节点 (x, y)</th>${fine?'':'<th>插值权重</th>'}<th>解码特征值</th></tr></thead><tbody>${sample.nodes.map((n,i)=>`<tr><td>(${n.x}, ${n.y})</td>${fine?'':`<td>${fmt(sample.weights[i])}</td>`}<td>${n.values.map(v=>fmt(v,3)).join(' / ')}</td></tr>`).join('')}</tbody></table></div>`;
     if(!fine)body+=valueGrid(t.coarseValues);
+  } else if(state.node==='local'){
+    title='C / 高精度局部特征';size='4 × 3 → 3';
+    body='<p>每个节点存 3 个 16-bit 值。四点插值后减去 0.5，得到三个网络输入，由解码网络将它们与其他特征一起映射为 RGB。</p>'+`<div class="table-scroll"><table class="node-table"><thead><tr><th>节点 (x, y)</th><th>插值权重</th><th>解码特征值</th></tr></thead><tbody>${t.local.nodes.map((n,i)=>`<tr><td>(${n.x}, ${n.y})</td><td>${fmt(t.local.weights[i])}</td><td>${n.values.map(v=>fmt(v,5)).join(' / ')}</td></tr>`).join('')}</tbody></table></div>`+valueGrid(t.localValues);
   } else if(state.node==='position'){
-    title='C / 用周期函数标记位置';size='3 × 4 = 12';body='<p>频率 64、128、256。每组依次为 sin(x)、sin(y)、cos(x)、cos(y)。不额外存储一张位置图。</p>'+valueGrid(t.position);
+    title='D / 用周期函数标记位置';size='3 × 4 = 12';body='<p>频率 64、128、256。每组依次为 sin(x)、sin(y)、cos(x)、cos(y)。不额外存储一张位置图。</p>'+valueGrid(t.position);
   } else if(state.node==='input'){
-    title='41 个数，共同描述这个像素';size='24 + 5 + 12';body='<p>依次拼接细网格、粗网格和位置编码，送入第一层网络。下面按输入顺序排列。</p>'+valueGrid(t.input);
+    title='41 个数，共同描述这个像素';size='24 + 2 + 3 + 12';body='<p>依次拼接细网格、粗网格、高精度局部特征和位置编码，送入第一层网络。下面按输入顺序排列。</p>'+valueGrid(t.input);
   } else if(state.node==='output'){
     title='最后，把 80 个激活映射成颜色';size='80 → 3';body='<p>输出层不使用正弦激活。线性输出限幅到 [0, 1] 后，乘以 255 并取整得到 RGB8。</p>'+valueGrid(t.activations[3])+`<p style="margin-top:12px">限幅后的 RGB：${t.rgb.map(v=>fmt(v,6)).join(' / ')}</p>`;
   } else {
@@ -79,20 +82,21 @@ function renderNode(){
 
 const storageText={
   fine:['细网格 / 4-bit 局部特征','256 × 256 个节点，每个节点 6 个通道，每个值只需 4 bit。共 393,216 个特征值，占用 196,608 字节。'],
-  coarse:['粗网格 / 4-bit 局部特征','128 × 128 个节点，每个节点 5 个通道。每次解码用四点插值，得到更大空间尺度上的特征，共 40,960 字节。'],
+  coarse:['粗网格 / 4-bit 局部特征','128 × 128 个节点，每个节点 2 个 4-bit 通道，共 16,384 字节。解码时对四个相邻节点做双线性插值，得到两个网络输入。'],
+  local:['高精度网格 / 16-bit 局部特征','64 × 64 个节点，每个节点 3 个 UNORM16 通道，共 24,576 字节。网格用图像块的颜色均值初始化，在训练中学习局部特征，插值后作为网络输入。'],
   network:['解码网络 / 10-bit 权重','41 → 80 → 80 → 80 → 3，共 16,320 个权重，使用 10-bit 存储；另有 FP32 行尺度和偏置。总计 22,344 字节。'],
-  meta:['描述文件 / 如何读懂这些字节','1,614 字节 JSON，记录网格尺寸、网络形状、位宽、数据段偏移与校验值。它也计入 255.396 KiB 的比较预算。']
+  meta:['描述文件 / 如何读懂这些字节','1,759 字节 JSON，记录网格尺寸、网络形状、位宽、数据段偏移与校验值。它也计入 255.538 KiB 的比较预算。']
 };
 function renderStorage(){
   const [title,body]=storageText[state.storage];$('storage-detail').innerHTML=translate(`<strong>${title}</strong><p>${body}</p>`);
   chooseButtons('[data-storage]','storage',state.storage);
-  const isGrid=state.storage==='fine'||state.storage==='coarse';
-  if(isGrid){state.level=state.storage==='fine'?0:1;state.channel=0;updateChannelOptions();}
+  const isGrid=['fine','coarse','local'].includes(state.storage);
+  if(isGrid){state.level={fine:0,coarse:1,local:2}[state.storage];state.channel=0;updateChannelOptions();}
   drawGrid();
 }
 function updateChannelOptions(){
-  const count=state.level===0?6:5;$('grid-channel').innerHTML=Array.from({length:count},(_,i)=>`<option value="${i}">${i+1} / ${count}</option>`).join('');
-  $('grid-title').textContent=translate((state.level===0?'细':'粗')+'网格 · 学习到的特征');
+  const count=[6,2,3][state.level];$('grid-channel').innerHTML=Array.from({length:count},(_,i)=>`<option value="${i}">${i+1} / ${count}</option>`).join('');
+  $('grid-title').textContent=translate((['细','粗','高精度'][state.level])+'网格 · 学习到的特征');
 }
 function drawGrid(){
   if(!state.model)return;
@@ -100,11 +104,12 @@ function drawGrid(){
   canvas.width=n;canvas.height=n;
   const ctx=canvas.getContext('2d'),im=ctx.createImageData(n,n),g=state.model.grids[state.level];
   for(let i=0;i<n*n;i++){
-    const v=g[i*c+state.channel],rgb=mix([239,242,232],v<0?[117,136,172]:[40,98,76],Math.min(1,Math.abs(v)/(v<0?7/16:.5)));
+    const v=g[i*c+state.channel]-(state.level===2?.5:0),rgb=mix([239,242,232],v<0?[117,136,172]:[40,98,76],Math.min(1,Math.abs(v)/(state.level===2?.5:(v<0?7/16:.5))));
     im.data.set([...rgb,255],i*4);
   }
   ctx.putImageData(im,0,0);
-  canvas.setAttribute('aria-label',translate(`${state.level===0?'细':'粗'}网格第 ${state.channel+1} 通道的实际量化特征值`));
+  $('grid-min').textContent=state.level===2?'0':'−7/16';$('grid-max').textContent=state.level===2?'1':'8/16';
+  canvas.setAttribute('aria-label',translate(`${['细','粗','高精度'][state.level]}网格第 ${state.channel+1} 通道的实际量化特征值`));
 }
 document.querySelectorAll('[data-storage]').forEach(b=>b.addEventListener('click',()=>{state.storage=b.dataset.storage;renderStorage();}));
 $('grid-channel').addEventListener('change',e=>{state.channel=Number(e.target.value);drawGrid();});
@@ -114,10 +119,11 @@ function renderHistory(){
   const history=state.data.history,index=Number($('history-slider').value),current=history[index];
   $('history-score').innerHTML=`${fmt(current.rgb8_psnr,3)}<span> dB</span>`;$('history-pass').textContent=index;
   $('history-changes').textContent=translate(index===0?'搜索起点':`${current.changes.toLocaleString(locale)} 个编码更新`);
-  const px=i=>52+i*39.5,py=y=>202-(y-42.5)/1.25*174;
+  const low=Math.floor(Math.min(state.data.scores.bc7,...history.map(h=>h.rgb8_psnr))*2)/2, high=Math.ceil(Math.max(...history.map(h=>h.rgb8_psnr))*2)/2;
+  const px=i=>52+i*474/(history.length-1),py=y=>202-(y-low)/(high-low)*174;
   const x=px(index),y=py(current.rgb8_psnr),bc=py(state.data.scores.bc7);
-  let svg='<title>真实离散搜索记录：相同体积下，质量从 42.648 提高到 43.636 dB</title>';
-  for(const tick of [42.5,43,43.5])svg+=`<line x1="52" y1="${py(tick)}" x2="526" y2="${py(tick)}" stroke="#e6e9e1"/><text x="40" y="${py(tick)+4}" text-anchor="end" fill="${colors.muted}" font-size="10">${tick.toFixed(1)}</text>`;
+  let svg='<title>本模型的实际编码搜索记录</title>';
+  for(const tick of Array.from({length:5},(_,i)=>low+i*(high-low)/4))svg+=`<line x1="52" y1="${py(tick)}" x2="526" y2="${py(tick)}" stroke="#e6e9e1"/><text x="40" y="${py(tick)+4}" text-anchor="end" fill="${colors.muted}" font-size="10">${tick.toFixed(1)}</text>`;
   svg+=`<text x="4" y="18" fill="${colors.muted}" font-size="9">PSNR / dB</text><line x1="52" y1="${bc}" x2="526" y2="${bc}" stroke="#a9946e" stroke-dasharray="4 4"/><text x="521" y="${bc+13}" text-anchor="end" fill="#8d7042" font-size="10">BC7 42.904</text>`;
   const points=history.map((h,i)=>`${px(i)},${py(h.rgb8_psnr)}`).join(' ');
   svg+=`<polyline points="${points}" fill="none" stroke="#c5d6c9" stroke-width="2"/><polyline points="${history.slice(0,index+1).map((h,i)=>`${px(i)},${py(h.rgb8_psnr)}`).join(' ')}" fill="none" stroke="${colors.green}" stroke-width="2.5"/>`;
@@ -172,6 +178,7 @@ async function init(){
     $('load-status').textContent=translate('本地模型已就绪 · 点击图像或输入坐标，开始探索');
     $('self-check').textContent=translate(`12 个参考像素自检通过，最大 RGB 浮点差为 ${maxError.toExponential(1)}。`);
     $('trace-button').disabled=false;
+    $('history-slider').max=data.history.length-1;
     updatePixel(state.x,state.y);renderStorage();renderHistory();
     document.documentElement.dataset.ready='true';
   }catch(error){

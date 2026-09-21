@@ -1,4 +1,4 @@
-// Independent, dependency-free reader of the packed Round 15 codec.
+// Independent, dependency-free reader of the packed local-reallocation codec.
 // All coordinates are native 512 x 512 pixel centers. Images are top-to-bottom.
 export function unpackModel(buffer, descriptor) {
   const data = new Uint8Array(buffer);
@@ -20,7 +20,7 @@ export function unpackModel(buffer, descriptor) {
     }
     values[segment.name] = result;
   }
-  const grids = descriptor.config.bits.map((bits,i) => Float64Array.from(values['grid'+i], v => (v-((1 << (bits-1))-1))/(1 << bits)));
+  const grids = descriptor.config.bits.map((bits,i) => Float64Array.from(values['grid'+i], v => bits===16 ? Math.fround(v/65535) : (v-((1 << (bits-1))-1))/(1 << bits)));
   const layers = [0,1,2,3].map(i => {
     const segment = descriptor.segments.find(s => s.name === 'weight'+i);
     const [output,input] = segment.shape;
@@ -41,9 +41,17 @@ export function gridSample(model, level, u, v) {
 
 export function tracePixel(model, x, y) {
   const u=(x+.5)/512,v=(y+.5)/512;
-  const fine=gridSample(model,0,u,v), coarse=gridSample(model,1,u,v);
+  const fine=gridSample(model,0,u,v), coarse=gridSample(model,1,u,v), local=gridSample(model,2,u,v);
   const fineValues=fine.nodes.flatMap(n=>n.values);
-  const coarseValues=Array.from({length:5},(_,c)=>coarse.nodes.reduce((sum,node,i)=>sum+node.values[c]*coarse.weights[i],0));
+  // Match the GPU's staged FP32 bilinear interpolation, then center UNORM16.
+  const interpolate=(sample,channels)=>Array.from({length:channels},(_,c)=>{
+    const f=Math.fround, n=sample.nodes.map(node=>node.values[c]);
+    const top=f(f(n[0]*(1-sample.fx))+f(n[1]*sample.fx));
+    const bottom=f(f(n[2]*(1-sample.fx))+f(n[3]*sample.fx));
+    return f(f(top*(1-sample.fy))+f(bottom*sample.fy));
+  });
+  const coarseValues=interpolate(coarse,model.config.channels[1]);
+  const localValues=interpolate(local,model.config.channels[2]).map(v=>Math.fround(v-.5));
   const position=[];
   for(const f of [1,2,4]) {
     // Match the training code's FP32 phase construction before sin/cos.
@@ -51,7 +59,7 @@ export function tracePixel(model, x, y) {
     const a=phase(u),b=phase(v);
     position.push(Math.fround(Math.sin(a)),Math.fround(Math.sin(b)),Math.fround(Math.cos(a)),Math.fround(Math.cos(b)));
   }
-  const input=[...fineValues,...coarseValues,...position];
+  const input=[...fineValues,...coarseValues,...localValues,...position];
   const activations=[];
   let current=input;
   model.layers.forEach((layer,index)=>{
@@ -64,5 +72,5 @@ export function tracePixel(model, x, y) {
     current=next;
     activations.push(Array.from(next));
   });
-  return {x,y,u,v,fine,coarse,fineValues,coarseValues,position,input,activations,rgb:Array.from(current,v=>Math.max(0,Math.min(1,v)))};
+  return {x,y,u,v,fine,coarse,local,fineValues,coarseValues,localValues,position,input,activations,rgb:Array.from(current,v=>Math.max(0,Math.min(1,v)))};
 }
